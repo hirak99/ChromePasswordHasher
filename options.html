@@ -3,10 +3,13 @@
 <head><title>My Test Extension Options</title></head>
 <body>
 
-<p>Master Password: <input type="password" id="master_pass" value="Blue" /></p>
+Password Length: <input id="password_length" type="number" min="6" max="256" value="12" />
+<br/>
+Master Password: <input id="master_pass" value="Blue" />
+<br/>
 
 <button id="save">Save</button>
-<div id="status"></div>
+<span id="status"></span>
 
 <script src="options.js"></script>
 </body>

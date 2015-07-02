@@ -1,4 +1,4 @@
-var Hasher=function(salt,passwd,loc) {
+var Hasher=function(salt,passwd,loc,passlength) {
 	function SHA256(s){
 	 
 		var chrsz   = 8;
@@ -185,7 +185,6 @@ var Hasher=function(salt,passwd,loc) {
 		return result;
 	}
 
-	var passlength=12;
 	var dontConfuse=true;	// omits O0l1I from the password characters
 	// 1 - Symbols, 2-Smallhand, 4-Caps, 8-Numbers
 	var maskAllow=15;
@@ -241,34 +240,57 @@ function getCurrentTabUrl(callback) {
   // alert(url); // Shows "undefined", because chrome.tabs.query is async.
 }
 
+function extractDomain(url) {
+    var domain;
+    //find & remove protocol (http, ftp, etc.) and get domain
+    if (url.indexOf("://") > -1) {
+        domain = url.split('/')[2];
+    }
+    else {
+        domain = url.split('/')[0];
+    }
+
+    //find & remove port number
+    domain = domain.split(':')[0];
+	
+	//return only google.com for www.google.com, for example
+	splitup = domain.split('.')
+	if (splitup.length>2)
+		domain=splitup[splitup.length-2]+'.'+splitup[splitup.length-1];
+
+    return domain;
+}
 
 document.addEventListener('DOMContentLoaded', function() {
   chrome.storage.sync.get({
     masterPass: 'replace_this',
-	lastWeak: ''
+	lastWeak: '',
+	passLength: '12'
   }, function(items) {
 	  getCurrentTabUrl(function(url) {
 			var loc = url;
 			//if (loc.length>4 && loc.substr(0,4).toLowerCase()=='www.') loc=loc.substr(4);
 			locSplit=loc.split('.');
 			if (locSplit.length<=2) loc=locSplit[0];
-			else loc=locSplit[1];
-			var weakpass=document.getElementById('weak_pass');
-			var newp=document.getElementById('strong_pass');
+			else loc=locSplit[1]+'.'+locSplit[2];
+			var el_domain=document.getElementById('domain');
+			el_domain.innerHTML=extractDomain(url);
+			var el_weakpass=document.getElementById('weak_pass');
+			var el_newp=document.getElementById('strong_pass');
 			var textchange=function() {
-				var passwd=weakpass.value;
-				newp.value = Hasher(items.masterPass,passwd,loc);
+				var passwd=el_weakpass.value;
+				el_newp.value = Hasher(items.masterPass,passwd,loc,parseInt(items.passLength));
 				chrome.storage.sync.set({
-					lastWeak: weakpass.value
+					lastWeak: el_weakpass.value
 				});
 			};
-			weakpass.value=items.lastWeak;
-			weakpass.onkeyup=textchange;
-			newp.onfocus=function() {newp.select();}
-			newp.onclick=function() {newp.select();}
+			el_weakpass.value=items.lastWeak;
+			el_weakpass.onkeyup=textchange;
+			el_newp.onfocus=function() {el_newp.select();}
+			el_newp.onclick=function() {el_newp.select();}
 			textchange();
-			if (weakpass.value.length==0) weakpass.focus();
-			else {newp.select(); newp.focus();}
+			if (el_weakpass.value.length==0) el_weakpass.focus();
+			else {el_newp.select(); el_newp.focus();}
 	  });
   });
 });
